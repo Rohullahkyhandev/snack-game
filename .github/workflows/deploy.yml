@@ -42,7 +42,8 @@ jobs:
             git pull origin main
 
             npm install
-
             npm run build
 
-            pm2 restart snack-game
+            pm2 delete snack-game || true
+            pm2 start npm --name snack-game -- run preview
+            pm2 save
