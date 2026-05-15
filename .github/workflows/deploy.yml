@@ -1,0 +1,59 @@
+name: CI/CD Pipeline to AWS EC2
+
+# 1. This triggers the workflow when you push to the 'main' branch
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  # -------------------------------------------------------------
+  # CONTINUOUS INTEGRATION (CI)
+  # -------------------------------------------------------------
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # (Optional) Example for Node.js. Change this if using Python/Java.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test # Assuming you have a test script in package.json
+
+  # -------------------------------------------------------------
+  # CONTINUOUS DEPLOYMENT (CD)
+  # -------------------------------------------------------------
+  deploy:
+    # This ensures deployment only happens if tests pass
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          # The script below runs ON your EC2 server
+          script: |
+            cd /var/www/your-repo
+
+            # Pull the latest code from GitHub
+            git pull origin main
+
+            # Install any new dependencies
+            npm install # Change to pip install -r requirements.txt for Python
+
+            # Build the app (if required, e.g., React/Angular/NextJS)
+            npm run build 
+
+            # Restart the application
+            pm2 restart your-app-name # Change this to your restart command (e.g., sudo systemctl restart myapp)
