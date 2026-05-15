@@ -37,7 +37,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
 
           script: |
-            cd /var/www/snack-game
+            cd /home/ubuntu/snack-game
 
             git pull origin main
 
