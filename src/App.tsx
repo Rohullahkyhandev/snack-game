@@ -1,4 +1,4 @@
-import  { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 20; // in pixels
@@ -16,6 +16,7 @@ export default function App() {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
+  const [developerData, setDeveloperData] = useState(null) as any;
 
   // Use refs to access latest state inside the game loop interval
   const snakeRef = useRef(snake);
@@ -24,20 +25,47 @@ export default function App() {
   const foodRef = useRef(food);
 
   // Sync refs with state
-  useEffect(() => { snakeRef.current = snake; }, [snake]);
-  useEffect(() => { directionRef.current = direction; }, [direction]);
-  useEffect(() => { foodRef.current = food; }, [food]);
+  useEffect(() => {
+    snakeRef.current = snake;
+  }, [snake]);
+  useEffect(() => {
+    directionRef.current = direction;
+  }, [direction]);
+  useEffect(() => {
+    foodRef.current = food;
+  }, [food]);
+
+  useEffect(() => {
+    const getDevelperData = async () => {
+      try {
+        const response = await fetch("http://http://54.227.77.58:5000/", {
+          method: "GET",
+        });
+
+        const data = await response.json();
+
+        setDeveloperData(data)
+    
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    getDevelperData();
+  }, []);
 
   // Helper to spawn food avoiding the snake's body
-  const generateFood = useCallback((currentSnake:any[]) => {
-    let newFood:any;
+  const generateFood = useCallback((currentSnake: any[]) => {
+    let newFood: any;
     while (true) {
       newFood = {
         x: Math.floor(Math.random() * GRID_SIZE),
         y: Math.floor(Math.random() * GRID_SIZE),
       };
       // eslint-disable-next-line no-loop-func
-      const isOnSnake = currentSnake.some((segment) => segment.x === newFood.x && segment.y === newFood.y);
+      const isOnSnake = currentSnake.some(
+        (segment) => segment.x === newFood.x && segment.y === newFood.y,
+      );
       if (!isOnSnake) break;
     }
     return newFood;
@@ -50,17 +78,17 @@ export default function App() {
 
   // Keyboard controls
   useEffect(() => {
-    const handleKeyDown = (e:any) => {
+    const handleKeyDown = (e: any) => {
       // Use lastProcessedDir to prevent rapid double-key-press self-collisions
       const lastDir = lastProcessedDirRef.current;
-      
-      if (['ArrowUp', 'w', 'W'].includes(e.key) && lastDir.y === 0) {
+
+      if (["ArrowUp", "w", "W"].includes(e.key) && lastDir.y === 0) {
         setDirection({ x: 0, y: -1 });
-      } else if (['ArrowDown', 's', 'S'].includes(e.key) && lastDir.y === 0) {
+      } else if (["ArrowDown", "s", "S"].includes(e.key) && lastDir.y === 0) {
         setDirection({ x: 0, y: 1 });
-      } else if (['ArrowLeft', 'a', 'A'].includes(e.key) && lastDir.x === 0) {
+      } else if (["ArrowLeft", "a", "A"].includes(e.key) && lastDir.x === 0) {
         setDirection({ x: -1, y: 0 });
-      } else if (['ArrowRight', 'd', 'D'].includes(e.key) && lastDir.x === 0) {
+      } else if (["ArrowRight", "d", "D"].includes(e.key) && lastDir.x === 0) {
         setDirection({ x: 1, y: 0 });
       }
     };
@@ -86,15 +114,21 @@ export default function App() {
 
       // 1. Check Wall Collision
       if (
-        newHead.x < 0 || newHead.x >= GRID_SIZE ||
-        newHead.y < 0 || newHead.y >= GRID_SIZE
+        newHead.x < 0 ||
+        newHead.x >= GRID_SIZE ||
+        newHead.y < 0 ||
+        newHead.y >= GRID_SIZE
       ) {
         handleGameOver();
         return;
       }
 
       // 2. Check Self Collision
-      if (currentSnake.some((segment) => segment.x === newHead.x && segment.y === newHead.y)) {
+      if (
+        currentSnake.some(
+          (segment) => segment.x === newHead.x && segment.y === newHead.y,
+        )
+      ) {
         handleGameOver();
         return;
       }
@@ -106,7 +140,7 @@ export default function App() {
         setScore((s) => s + 10);
         setFood(generateFood(newSnake));
       } else {
-        newSnake.pop(); 
+        newSnake.pop();
       }
 
       setSnake(newSnake);
@@ -130,7 +164,7 @@ export default function App() {
   };
 
   // --- STYLES ---
-  const styles:any = {
+  const styles: any = {
     container: {
       display: "flex",
       flexDirection: "column",
@@ -160,7 +194,7 @@ export default function App() {
       overflow: "hidden",
       boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
     },
-    cell: (x:any, y:any, isFood:any, isHead:any) => ({
+    cell: (x: any, y: any, isFood: any, isHead: any) => ({
       position: "absolute",
       left: `${x * CELL_SIZE}px`,
       top: `${y * CELL_SIZE}px`,
@@ -174,7 +208,10 @@ export default function App() {
     }),
     overlay: {
       position: "absolute",
-      top: 0, left: 0, right: 0, bottom: 0,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
       backgroundColor: "rgba(0, 0, 0, 0.7)",
       display: "flex",
       flexDirection: "column",
@@ -198,13 +235,16 @@ export default function App() {
       marginTop: "20px",
       color: "#a4b0be",
       fontSize: "0.9rem",
-    }
+    },
   };
 
   return (
     <div style={styles.container}>
-      <h2>🐍 Snack / Snake Game</h2>
       
+      {developerData  &&  <span>{developerData.message}</span>}
+
+      <h2>🐍 Snack / Snake Game</h2>
+
       <div style={styles.header}>
         <div>Score: {score}</div>
         <div>High Score: {highScore}</div>
@@ -227,11 +267,15 @@ export default function App() {
           <div style={styles.overlay}>
             <h1 style={{ color: "#ff4757", margin: 0 }}>GAME OVER</h1>
             <p>Final Score: {score}</p>
-            <button 
-              style={styles.button} 
+            <button
+              style={styles.button}
               onClick={resetGame}
-              onMouseOver={(e:any) => e.target.style.backgroundColor = "#45a049"}
-              onMouseOut={(e:any) => e.target.style.backgroundColor = "#4caf50"}
+              onMouseOver={(e: any) =>
+                (e.target.style.backgroundColor = "#45a049")
+              }
+              onMouseOut={(e: any) =>
+                (e.target.style.backgroundColor = "#4caf50")
+              }
             >
               Play Again
             </button>
@@ -239,7 +283,9 @@ export default function App() {
         )}
       </div>
 
-      <p style={styles.controlsHint}>Use <strong>W, A, S, D</strong> or <strong>Arrow Keys</strong> to move.</p>
+      <p style={styles.controlsHint}>
+        Use <strong>W, A, S, D</strong> or <strong>Arrow Keys</strong> to move.
+      </p>
     </div>
   );
 }
