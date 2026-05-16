@@ -38,7 +38,7 @@ export default function App() {
   useEffect(() => {
     const getDevelperData = async () => {
       try {
-        const response = await fetch("http://http://54.227.77.58:5000/", {
+        const response = await fetch("http://54.227.77.58:5000/", {
           method: "GET",
         });
 
